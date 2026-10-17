@@ -485,7 +485,7 @@
                 <h2 data-i18n="otherTitle">Count khác</h2>
                 <p data-i18n="otherDescription">Theo dõi thêm các tài khoản TikTok và game Roblox tại đây.</p>
             </div>
-            <div class="count-total"><span class="count-total-dot"></span><span><strong id="trackerCountNumber">3</strong> <span data-i18n="trackerCountLabel">BỘ ĐẾM</span></span></div>
+            <div class="count-total"><span class="count-total-dot"></span><span><strong id="trackerCountNumber">2</strong> <span data-i18n="trackerCountLabel">BỘ ĐẾM</span></span></div>
         </div>
 
         <div class="manager-toolbar">
@@ -529,24 +529,6 @@
         </section>
 
         <div class="counts-grid" id="countsGrid">
-            <!-- TikTok: 邵保 -->
-            <article class="count-card tiktok-one">
-                <div class="count-card-head">
-                    <div class="count-avatar" aria-hidden="true">♪</div>
-                    <div>
-                        <h3 class="count-name">邵保</h3>
-                        <p class="count-platform" data-i18n="tiktokFollowerCount">Lượt theo dõi TikTok</p>
-                    </div>
-                </div>
-                <div class="platform-tag">♪ TIKTOK · FOLLOWERS</div>
-                <p class="count-card-description" data-i18n="shaobaoDescription">Bộ đếm lượt theo dõi trực tiếp của tài khoản 邵保.</p>
-                <div class="small-embed-shell">
-                    <iframe src="https://livecounts.nl/tiktok-realtime/embed/?u=ngohaovuluong"
-                            width="300" height="80" title="邵保 live TikTok follower count"
-                            style="border:0;overflow:hidden" loading="lazy"></iframe>
-                </div>
-                <div class="count-card-footer"><span>LIVECOUNTS.NL</span><span class="count-live" data-i18n="liveLabel">Trực tiếp</span></div>
-            </article>
 
             <!-- Roblox: Sniper Arena -->
             <article class="count-card roblox-other">
@@ -830,7 +812,7 @@
     const embedNameInput = document.getElementById("embedName");
     const embedCodeInput = document.getElementById("embedCode");
     const countsGrid = document.getElementById("countsGrid");
-    const baseCounterCount = 3;
+    const baseCounterCount = 2;
 
     let customCountsMemory = [];
     let currentSession = null;
