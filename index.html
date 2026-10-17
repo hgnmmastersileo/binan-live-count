@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#080b14">
+    <meta name="description" content="BINAN LIVE COUNT — live Roblox player counts and TikTok follower counts.">
+    <title>BINAN LIVE COUNT — Live Dashboard</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #080b14;
+            --panel: rgba(18, 23, 40, .84);
+            --panel-solid: #121728;
+            --border: rgba(255, 255, 255, .085);
+            --text: #f4f6ff;
+            --muted: #929bb5;
+            --blue: #79a5ff;
+            --purple: #a78bfa;
+            --green: #54e6a2;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            min-height: 100vh;
+            overflow-x: hidden;
+            background:
+                radial-gradient(ellipse at 10% 0%, rgba(59, 91, 190, .19), transparent 38%),
+                radial-gradient(ellipse at 90% 35%, rgba(129, 65, 226, .12), transparent 34%),
+                var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        button, a { -webkit-tap-highlight-color: transparent; }
+        button { font: inherit; }
+        a { color: inherit; }
+
+        .ambient {
+            position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
+        }
+        .ambient::before {
+            content: ""; position: absolute; top: 130px; left: 50%;
+            width: min(900px, 110vw); height: 500px; transform: translateX(-50%);
+            border-radius: 50%; background: rgba(75, 95, 210, .07); filter: blur(100px);
+        }
+        .page { width: min(1100px, calc(100% - 48px)); margin: 0 auto; }
+
+        /* Header and language selector */
+        .navbar {
+            min-height: 88px; display: flex; align-items: center; justify-content: space-between;
+            gap: 20px; border-bottom: 1px solid rgba(255, 255, 255, .055);
+        }
+        .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .brand-mark {
+            width: 43px; height: 43px; display: grid; place-items: center; position: relative;
+            isolation: isolate; overflow: hidden; border: 1px solid rgba(255,255,255,.19);
+            border-radius: 14px; background: linear-gradient(140deg, #75a2ff, #7655e9 85%);
+            box-shadow: 0 5px 30px rgba(100,112,255,.25); font-size: 21px; font-weight: 900;
+        }
+        .brand-mark::after {
+            content: ""; position: absolute; inset: 0; z-index: -1;
+            background: linear-gradient(135deg, transparent 35%, #fff4);
+        }
+        .brand-name { font-size: 14px; font-weight: 900; letter-spacing: 1.45px; }
+        .brand-caption { margin-top: 5px; color: var(--muted); font-size: 9px; letter-spacing: 1.7px; }
+        .nav-right { display: flex; align-items: center; gap: 14px; }
+        .system-status { display: flex; align-items: center; gap: 8px; color: #b0bbcf; font-size: 11px; font-weight: 600; }
+        .status-dot {
+            position: relative; width: 7px; height: 7px; flex-shrink: 0; border-radius: 50%;
+            background: var(--green); box-shadow: 0 0 13px rgba(84,230,162,.65);
+        }
+        .status-dot::after {
+            content: ""; position: absolute; inset: -4px; border: 1px solid rgba(84,230,162,.45);
+            border-radius: 50%; animation: ripple 2s infinite;
+        }
+        .language { position: relative; z-index: 20; }
+        .language-button {
+            min-height: 41px; display: flex; align-items: center; gap: 9px; padding: 0 12px;
+            border: 1px solid var(--border); border-radius: 12px; background: rgba(255,255,255,.045);
+            color: var(--text); font-size: 12px; font-weight: 600; cursor: pointer;
+            transition: background .2s, border-color .2s;
+        }
+        .language-button:hover, .language-button[aria-expanded="true"] {
+            border-color: rgba(121,165,255,.4); background: rgba(121,165,255,.09);
+        }
+        .language-button:focus-visible, .language-option:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+        .language-arrow { color: var(--muted); font-size: 10px; transition: transform .2s; }
+        .language-button[aria-expanded="true"] .language-arrow { transform: rotate(180deg); }
+        .language-menu {
+            position: absolute; top: calc(100% + 10px); right: 0; width: 184px; padding: 6px;
+            border: 1px solid rgba(255,255,255,.11); border-radius: 15px; background: #151a2b;
+            box-shadow: 0 20px 55px #0009; opacity: 0; visibility: hidden;
+            transform: translateY(-7px) scale(.98); transform-origin: top right;
+            transition: opacity .18s, transform .18s, visibility .18s;
+        }
+        .language-menu.open { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
+        .language-option {
+            width: 100%; display: flex; align-items: center; gap: 10px; padding: 12px 10px;
+            border: 0; border-radius: 10px; background: transparent; color: #c1c9dc;
+            font-size: 12px; text-align: left; cursor: pointer; transition: .18s;
+        }
+        .language-option:hover { background: rgba(255,255,255,.06); color: white; }
+        .language-option.active { background: rgba(121,165,255,.11); color: #a9c4ff; }
+        .option-check { margin-left: auto; color: var(--blue); font-weight: 800; }
+
+        /* Intro */
+        .intro { padding: 57px 0 28px; animation: rise .7s ease both; }
+        .eyebrow {
+            display: inline-flex; align-items: center; gap: 9px; margin-bottom: 18px; color: #a6bcff;
+            font-size: 10px; font-weight: 800; letter-spacing: 2.1px; text-transform: uppercase;
+        }
+        .eyebrow-line { width: 23px; height: 1px; background: linear-gradient(90deg,var(--blue),var(--purple)); }
+        .intro h1 { max-width: 720px; font-size: clamp(35px,6vw,60px); font-weight: 900; line-height: 1.08; letter-spacing: -2.9px; }
+        .gradient-text {
+            color: transparent; background: linear-gradient(100deg,#91b8ff 10%,#a68cff 57%,#dbb3ff);
+            background-clip: text; -webkit-background-clip: text;
+        }
+        .intro-description { max-width: 640px; margin-top: 17px; color: var(--muted); font-size: 14px; line-height: 1.9; }
+
+        /* Primary dashboard */
+        .dashboard-grid {
+            display: grid; grid-template-columns: minmax(0,1fr) minmax(350px,.91fr); gap: 20px;
+            align-items: stretch; padding-bottom: 50px; animation: rise .8s .08s ease both;
+        }
+        .panel {
+            position: relative; overflow: hidden; min-width: 0; border: 1px solid var(--border);
+            border-radius: 24px; background: var(--panel); box-shadow: 0 25px 80px rgba(0,0,0,.19);
+            backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+        }
+        .game-panel { display: flex; flex-direction: column; min-height: 390px; padding: 26px; }
+        .game-art {
+            position: absolute; top: -115px; right: -90px; width: 320px; height: 320px; border-radius: 50%;
+            background: radial-gradient(circle,rgba(112,101,255,.21),rgba(89,124,255,.04) 52%,transparent 70%);
+            pointer-events: none;
+        }
+        .game-art::after { content: ""; position: absolute; inset: 42px; border: 1px solid rgba(158,165,255,.07); border-radius: 50%; }
+        .game-overline { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 29px; }
+        .section-label { color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: 1.7px; }
+        .featured-badge { padding: 7px 9px; border: 1px solid rgba(168,139,250,.22); border-radius: 8px; background: rgba(168,139,250,.08); color: #c5b3ff; font-size: 9px; font-weight: 700; }
+        .game-profile { position: relative; display: flex; align-items: center; gap: 17px; }
+        .game-icon {
+            width: 94px; height: 94px; flex-shrink: 0; display: grid; place-items: center; position: relative;
+            overflow: hidden; border: 1px solid rgba(255,255,255,.2); border-radius: 25px;
+            background: radial-gradient(circle at 25% 20%,#91baff66,transparent 42%),linear-gradient(145deg,#253a8a,#7142bd 70%,#34245e);
+            box-shadow: 0 12px 35px #524cce28,inset 0 1px #ffffff25; font-size: 42px;
+        }
+        .game-icon::after { content: ""; position: absolute; inset: 0; background: linear-gradient(145deg,#ffffff12,transparent 50%); pointer-events: none; }
+        .game-name { font-size: clamp(30px,4vw,43px); font-weight: 900; letter-spacing: -2px; }
+        .game-type { margin-top: 7px; color: #a2abc2; font-size: 12px; }
+        .game-description { position: relative; max-width: 390px; margin-top: 24px; color: var(--muted); font-size: 12px; line-height: 1.9; }
+        .game-divider { height: 1px; margin: 25px 0 19px; background: linear-gradient(90deg,var(--border),transparent); }
+        .game-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+        .meta-chip { display: inline-flex; align-items: center; gap: 7px; padding: 9px 11px; border: 1px solid rgba(255,255,255,.065); border-radius: 10px; background: rgba(255,255,255,.025); color: #bac3d8; font-size: 10px; font-weight: 600; }
+        .meta-chip .chip-icon { color: #a6bcff; }
+        .game-button {
+            position: relative; width: 100%; min-height: 48px; display: flex; align-items: center; justify-content: center;
+            gap: 10px; margin-top: auto; padding: 13px 16px; border: 1px solid rgba(255,255,255,.16);
+            border-radius: 13px; background: linear-gradient(100deg,#416fe0,#7957df); box-shadow: 0 8px 24px rgba(80,94,224,.19);
+            color: white; font-size: 12px; font-weight: 800; text-decoration: none; transition: transform .2s,filter .2s,box-shadow .2s;
+        }
+        .game-button:hover { transform: translateY(-2px); filter: brightness(1.1); box-shadow: 0 12px 32px rgba(80,94,224,.3); }
+        .game-button:active { transform: translateY(0); }
+
+        /* Main RIVALS embed */
+        .counter-panel {
+            display: flex; flex-direction: column; padding: 26px;
+            background: radial-gradient(ellipse at 100% 0%,rgba(85,117,220,.11),transparent 45%),var(--panel);
+        }
+        .counter-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 23px; }
+        .counter-title { margin-top: 8px; font-size: 23px; font-weight: 800; letter-spacing: -.8px; }
+        .counter-subtitle { margin-top: 7px; color: var(--muted); font-size: 11px; line-height: 1.7; }
+        .live-badge { flex-shrink: 0; display: inline-flex; align-items: center; gap: 7px; padding: 8px 10px; border: 1px solid rgba(84,230,162,.19); border-radius: 9px; background: rgba(84,230,162,.065); color: #80efb9; font-size: 9px; font-weight: 800; letter-spacing: 1px; }
+        .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px #54e6a277; animation: blink 1.8s infinite; }
+        .embed-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 11px; }
+        .embed-heading span:first-child { color: #c1c9dc; font-size: 10px; font-weight: 800; letter-spacing: 1.3px; }
+        .source-label { color: #69758e; font-size: 9px; }
+        .embed-shell {
+            display: flex; align-items: center; justify-content: center; width: 100%; min-height: 120px;
+            overflow: hidden; padding: 0; border: 1px solid rgba(255,255,255,.12); border-radius: 15px;
+            background: #f8faff; box-shadow: 0 8px 24px #0002,0 0 0 4px rgba(255,255,255,.018);
+        }
+        .embed-shell iframe { display: block; width: 100%; max-width: 380px; height: 120px; border: 0; overflow: hidden; }
+        .source-info { display: flex; align-items: flex-start; gap: 11px; margin-top: 16px; padding: 13px; border: 1px solid rgba(255,255,255,.055); border-radius: 12px; background: rgba(255,255,255,.025); }
+        .source-icon { width: 29px; height: 29px; flex-shrink: 0; display: grid; place-items: center; border: 1px solid rgba(121,165,255,.14); border-radius: 9px; background: rgba(121,165,255,.08); font-size: 14px; }
+        .source-info strong { display: block; margin: 2px 0 5px; color: #dce4fa; font-size: 11px; }
+        .source-info p { color: var(--muted); font-size: 10px; line-height: 1.75; }
+        .counter-bottom { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 18px; color: #79849e; font-size: 10px; line-height: 1.7; }
+        .counter-bottom svg { flex-shrink: 0; color: #9aa8c8; }
+
+        /* Other counts */
+        .other-counts { padding-bottom: 54px; animation: rise .8s .12s ease both; }
+        .section-heading-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 20px; }
+        .section-eyebrow { display: flex; align-items: center; gap: 8px; margin-bottom: 11px; color: #a6bcff; font-size: 9px; font-weight: 800; letter-spacing: 2px; }
+        .section-eyebrow::before { content: ""; width: 18px; height: 1px; background: linear-gradient(90deg,var(--blue),var(--purple)); }
+        .section-heading-row h2 { font-size: clamp(25px,4vw,32px); font-weight: 850; letter-spacing: -1.2px; }
+        .section-heading-row p { margin-top: 8px; color: var(--muted); font-size: 12px; line-height: 1.75; }
+        .count-total { display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; padding: 9px 12px; border: 1px solid var(--border); border-radius: 11px; background: rgba(255,255,255,.035); color: #bec8df; font-size: 10px; font-weight: 700; }
+        .count-total-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--purple); box-shadow: 0 0 10px #a78bfa88; }
+        .counts-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
+        .count-card {
+            --accent: #79a5ff;
+            position: relative; min-width: 0; overflow: hidden; padding: 19px;
+            border: 1px solid var(--border); border-radius: 20px;
+            background: linear-gradient(150deg,rgba(22,28,47,.94),rgba(14,18,31,.92));
+            box-shadow: 0 18px 55px rgba(0,0,0,.16); transition: transform .22s,border-color .22s,box-shadow .22s;
+        }
+        .count-card::before { content: ""; position: absolute; top: -72px; right: -72px; width: 155px; height: 155px; border-radius: 50%; background: var(--accent); opacity: .10; filter: blur(42px); pointer-events: none; }
+        .count-card:hover { transform: translateY(-4px); border-color: color-mix(in srgb,var(--accent) 36%,transparent); box-shadow: 0 24px 60px rgba(0,0,0,.24); }
+        .count-card.tiktok-one { --accent: #ff719c; }
+        .count-card.roblox-other { --accent: #9c93ff; }
+        .count-card.tiktok-two { --accent: #70c6ff; }
+        .count-card-head { position: relative; display: flex; align-items: center; gap: 12px; margin-bottom: 17px; }
+        .count-avatar {
+            width: 45px; height: 45px; flex-shrink: 0; display: grid; place-items: center;
+            border: 1px solid color-mix(in srgb,var(--accent) 25%,transparent); border-radius: 14px;
+            background: color-mix(in srgb,var(--accent) 11%,#101522); color: var(--accent); font-size: 20px; font-weight: 900;
+        }
+        .count-name { min-width: 0; font-size: 14px; font-weight: 800; overflow-wrap: anywhere; }
+        .count-platform { margin-top: 5px; color: var(--muted); font-size: 10px; }
+        .platform-tag { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 12px; padding: 6px 8px; border: 1px solid color-mix(in srgb,var(--accent) 22%,transparent); border-radius: 7px; background: color-mix(in srgb,var(--accent) 7%,transparent); color: color-mix(in srgb,var(--accent) 75%,white); font-size: 9px; font-weight: 800; letter-spacing: .9px; }
+        .count-card-description { min-height: 36px; margin-bottom: 13px; color: #9aa4bd; font-size: 10px; line-height: 1.8; }
+        .small-embed-shell {
+            position: relative; display: flex; align-items: center; justify-content: center;
+            width: 100%; min-height: 96px; overflow: hidden; padding: 7px;
+            border: 1px solid rgba(255,255,255,.13); border-radius: 13px;
+            background: linear-gradient(135deg,#fff,#f1f4fc); box-shadow: 0 8px 22px rgba(0,0,0,.19),inset 0 1px #fff;
+        }
+        .small-embed-shell.roblox-shell { min-height: 136px; }
+        .small-embed-shell iframe { display: block; width: 300px; max-width: 100%; height: 80px; border: 0; border-radius: 8px; }
+        .small-embed-shell iframe.roblox-iframe { width: 380px; height: 120px; }
+        .count-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.06); color: #707b94; font-size: 9px; }
+        .count-live { display: inline-flex; align-items: center; gap: 6px; color: #85e8b8; font-weight: 700; }
+        .count-live::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+
+        /* Embed manager: client-side/local-browser mode */
+        .manager-toolbar { display: flex; justify-content: flex-end; margin: -4px 0 18px; }
+        .manager-toggle {
+            display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+            min-height: 42px; padding: 0 15px; border: 1px solid rgba(121,165,255,.28);
+            border-radius: 12px; background: linear-gradient(110deg,rgba(65,111,224,.15),rgba(121,87,223,.15));
+            color: #c7d7ff; font-size: 11px; font-weight: 800; cursor: pointer;
+            transition: transform .2s,border-color .2s,background .2s;
+        }
+        .manager-toggle:hover { transform: translateY(-1px); border-color: rgba(121,165,255,.5); background: rgba(100,125,230,.17); }
+        .manager-panel {
+            margin-bottom: 20px; padding: 22px; border: 1px solid rgba(121,165,255,.2);
+            border-radius: 20px; background: linear-gradient(145deg,rgba(21,29,51,.96),rgba(14,18,31,.96));
+            box-shadow: 0 20px 55px rgba(0,0,0,.17); animation: rise .25s ease both;
+        }
+        .manager-panel[hidden] { display: none !important; }
+        #embedManagerForm[hidden], #signOutButton[hidden], #adminLoginForm[hidden] { display: none !important; }
+        .admin-login-form { margin-bottom: 17px; padding: 14px; border: 1px solid rgba(255,255,255,.07); border-radius: 13px; background: rgba(255,255,255,.025); }
+        .admin-login-form .manager-actions { margin-top: 10px; }
+        .admin-login-form .manager-status { margin-top: 9px; }
+        .manager-title { font-size: 17px; font-weight: 800; letter-spacing: -.35px; }
+        .manager-description { margin-top: 7px; color: var(--muted); font-size: 11px; line-height: 1.8; }
+        .manager-note {
+            display: flex; align-items: flex-start; gap: 9px; margin: 15px 0 18px; padding: 11px 12px;
+            border: 1px solid rgba(250,204,100,.16); border-radius: 11px;
+            background: rgba(250,204,100,.045); color: #d8c99f; font-size: 10px; line-height: 1.75;
+        }
+        .manager-form-grid { display: grid; grid-template-columns: minmax(0,.8fr) minmax(0,1.2fr); gap: 14px; }
+        .manager-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+        .manager-field label { color: #cbd4ea; font-size: 11px; font-weight: 700; }
+        .manager-input, .manager-textarea {
+            width: 100%; border: 1px solid rgba(255,255,255,.1); border-radius: 11px;
+            background: rgba(3,7,18,.52); color: var(--text); font: inherit; font-size: 12px;
+            outline: none; transition: border-color .2s,box-shadow .2s;
+        }
+        .manager-input { min-height: 43px; padding: 0 12px; }
+        .manager-textarea { min-height: 100px; resize: vertical; padding: 12px; line-height: 1.65; }
+        .manager-input:focus, .manager-textarea:focus { border-color: rgba(121,165,255,.6); box-shadow: 0 0 0 3px rgba(121,165,255,.09); }
+        .manager-input::placeholder, .manager-textarea::placeholder { color: #65718b; }
+        .manager-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+        .manager-submit, .manager-cancel {
+            min-height: 41px; padding: 0 14px; border-radius: 10px; font-size: 11px; font-weight: 800; cursor: pointer; transition: .2s;
+        }
+        .manager-submit { border: 1px solid rgba(255,255,255,.15); background: linear-gradient(100deg,#416fe0,#7957df); color: white; }
+        .manager-submit:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .manager-submit:disabled, .manager-cancel:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+        .manager-cancel { border: 1px solid var(--border); background: rgba(255,255,255,.035); color: #b8c2d8; }
+        .manager-cancel:hover { background: rgba(255,255,255,.075); }
+        .manager-status { min-height: 17px; margin-top: 12px; color: #89e5b6; font-size: 11px; line-height: 1.6; }
+        .manager-status.error { color: #ff9baf; }
+        .custom-count-card { border-color: rgba(121,165,255,.18); }
+        .custom-count-card .count-card-footer { align-items: center; }
+        .remove-count-button {
+            border: 0; background: transparent; color: #ff9eac; font: inherit; font-size: 10px;
+            font-weight: 700; cursor: pointer; padding: 4px 0 4px 8px;
+        }
+        .remove-count-button:hover { color: #ffd4dc; text-decoration: underline; }
+        .custom-empty { grid-column: 1 / -1; color: #77839d; font-size: 11px; }
+
+        /* Footer */
+        .footer { min-height: 73px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border-top: 1px solid rgba(255,255,255,.055); color: #6f7a93; font-size: 10px; }
+        .footer-brand { font-weight: 800; letter-spacing: 1.5px; }
+        .footer-right { display: flex; align-items: center; gap: 8px; }
+        .footer-link { color: #abb6d0; text-decoration: none; transition: color .2s; }
+        .footer-link:hover { color: white; }
+        .footer-separator { color: #424b60; }
+
+        @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+        @keyframes ripple { 0% { transform: scale(.7); opacity: .8; } 100% { transform: scale(1.8); opacity: 0; } }
+        @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 900px) {
+            .dashboard-grid { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+            .counts-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+            .count-card:last-child { grid-column: 1 / -1; }
+            .count-card:last-child .small-embed-shell { max-width: 430px; }
+        }
+        @media (max-width: 720px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .game-panel { min-height: 365px; }
+            .intro { padding-top: 44px; }
+        }
+        @media (max-width: 500px) {
+            .page { width: calc(100% - 30px); }
+            .navbar { min-height: 75px; gap: 8px; }
+            .brand { gap: 9px; }
+            .brand-mark { width: 37px; height: 37px; border-radius: 12px; font-size: 18px; }
+            .brand-name { font-size: 11px; letter-spacing: .8px; }
+            .brand-caption { font-size: 7px; letter-spacing: .9px; }
+            .nav-right { gap: 8px; }
+            .system-status { gap: 6px; font-size: 0; }
+            .language-button { min-height: 38px; gap: 6px; padding: 0 9px; font-size: 11px; }
+            .language-menu { width: 170px; }
+            .intro { padding: 37px 0 24px; }
+            .intro h1 { font-size: clamp(34px,10vw,46px); letter-spacing: -1.9px; }
+            .intro-description { margin-top: 13px; font-size: 12px; }
+            .eyebrow { margin-bottom: 14px; font-size: 9px; letter-spacing: 1.6px; }
+            .dashboard-grid { gap: 15px; padding-bottom: 38px; }
+            .panel { border-radius: 20px; }
+            .game-panel,.counter-panel { padding: 20px; }
+            .game-profile { gap: 14px; }
+            .game-icon { width: 76px; height: 76px; border-radius: 20px; font-size: 34px; }
+            .game-name { font-size: 35px; }
+            .game-type { font-size: 11px; }
+            .game-description { font-size: 11px; }
+            .counter-title { font-size: 21px; }
+            .counter-subtitle { font-size: 10px; }
+            .live-badge { padding: 7px 8px; font-size: 8px; }
+            .source-label { font-size: 8px; }
+            .section-heading-row { align-items: flex-start; }
+            .section-heading-row h2 { font-size: 26px; }
+            .section-heading-row p { font-size: 11px; }
+            .count-total { padding: 8px 9px; font-size: 9px; }
+            .counts-grid { grid-template-columns: 1fr; gap: 13px; }
+            .count-card:last-child { grid-column: auto; }
+            .manager-panel { padding: 17px; }
+            .manager-form-grid { grid-template-columns: 1fr; gap: 13px; }
+            .manager-toolbar { margin-top: 0; }
+            .manager-toggle { width: 100%; }
+            .count-card { padding: 18px; }
+            .count-card-description { min-height: 0; }
+            .small-embed-shell { min-height: 96px; }
+            .small-embed-shell.roblox-shell { min-height: 136px; }
+            .small-embed-shell iframe { width: 300px; }
+            .small-embed-shell iframe.roblox-iframe { width: 380px; }
+            .footer { align-items: flex-start; padding: 22px 0; font-size: 9px; }
+            .footer-right { flex-wrap: wrap; justify-content: flex-end; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *,*::before,*::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
+        }
+    </style>
+</head>
+<body>
+<div class="ambient" aria-hidden="true"></div>
+
+<div class="page">
+    <header class="navbar">
+        <a class="brand" href="#top" aria-label="BINAN LIVE COUNT home" id="top">
+            <div class="brand-mark">B</div>
+            <div>
+                <div class="brand-name">BINAN LIVE COUNT</div>
+                <div class="brand-caption" data-i18n="brandCaption">GAMING & CREATOR COUNTS</div>
+            </div>
+        </a>
+
+        <div class="nav-right">
+            <div class="system-status">
+                <span class="status-dot"></span>
+                <span data-i18n="systemStatus">HỆ THỐNG TRỰC TUYẾN</span>
+            </div>
+
+            <div class="language">
+                <button class="language-button" id="languageButton" type="button"
+                        aria-haspopup="true" aria-expanded="false" aria-controls="languageMenu">
+                    <span id="currentFlag">🇻🇳</span>
+                    <span id="currentLanguage">Tiếng Việt</span>
+                    <span class="language-arrow">⌄</span>
+                </button>
+                <div class="language-menu" id="languageMenu">
+                    <button class="language-option active" type="button" data-lang="vi">
+                        <span>🇻🇳</span><span>Tiếng Việt</span><span class="option-check">✓</span>
+                    </button>
+                    <button class="language-option" type="button" data-lang="en">
+                        <span>🇺🇸</span><span>English</span><span class="option-check"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="intro">
+        <div class="eyebrow"><span class="eyebrow-line"></span><span data-i18n="eyebrow">THE LIVE COUNT DASHBOARD</span></div>
+        <h1>
+            <span data-i18n="headingFirst">Theo dõi con số.</span><br>
+            <span class="gradient-text" data-i18n="headingSecond">Bắt nhịp cuộc chơi.</span>
+        </h1>
+        <p class="intro-description" data-i18n="introDescription">
+            Không gian theo dõi số người chơi Roblox và lượt theo dõi TikTok trong một dashboard hiện đại dành cho cộng đồng của bạn.
+        </p>
+    </section>
+
+    <main class="dashboard-grid">
+        <section class="panel game-panel">
+            <div class="game-art" aria-hidden="true"></div>
+            <div class="game-overline">
+                <span class="section-label" data-i18n="gameOverview">GAME NỔI BẬT</span>
+                <span class="featured-badge" data-i18n="featured">✦ ĐƯỢC CHỌN</span>
+            </div>
+            <div class="game-profile">
+                <div class="game-icon" aria-hidden="true">⚔️</div>
+                <div>
+                    <h2 class="game-name">RIVALS</h2>
+                    <p class="game-type" data-i18n="gameType">Roblox · FPS Shooter</p>
+                </div>
+            </div>
+            <p class="game-description" data-i18n="gameDescription">
+                Theo dõi số người chơi RIVALS bằng bộ đếm được nhúng trực tiếp từ LiveCounts.nl.
+            </p>
+            <div class="game-divider"></div>
+            <div class="game-meta">
+                <span class="meta-chip"><span class="chip-icon">◈</span><span data-i18n="metaRoblox">Nền tảng Roblox</span></span>
+                <span class="meta-chip"><span class="chip-icon">↗</span><span data-i18n="metaLive">Theo dõi trực tiếp</span></span>
+            </div>
+            <a class="game-button" href="https://www.roblox.com/games/17625359962" target="_blank" rel="noopener noreferrer">
+                <span data-i18n="openGame">Mở trang game</span><span aria-hidden="true">↗</span>
+            </a>
+        </section>
+
+        <section class="panel counter-panel">
+            <div class="counter-header">
+                <div>
+                    <div class="section-label" data-i18n="liveAnalytics">PHÂN TÍCH TRỰC TIẾP</div>
+                    <h2 class="counter-title" data-i18n="counterTitle">Người chơi</h2>
+                    <p class="counter-subtitle" data-i18n="counterSubtitle">Số liệu người chơi RIVALS</p>
+                </div>
+                <div class="live-badge"><span class="live-dot"></span><span data-i18n="liveBadge">LIVE</span></div>
+            </div>
+            <div class="embed-heading"><span data-i18n="playerCount">SỐ NGƯỜI CHƠI</span><span class="source-label">LIVECOUNTS</span></div>
+            <div class="embed-shell">
+                <iframe src="https://livecounts.nl/roblox-game-player-count/embed/?id=17625359962"
+                        width="380" height="120" style="border:0;overflow:hidden"
+                        title="Live Roblox player count: RIVALS" loading="lazy"></iframe>
+            </div>
+            <div class="source-info">
+                <div class="source-icon" aria-hidden="true">↗</div>
+                <div>
+                    <strong data-i18n="sourceTitle">Nguồn dữ liệu: LiveCounts.nl</strong>
+                    <p data-i18n="sourceDescription">Bộ đếm tải dữ liệu từ dịch vụ bên ngoài; số liệu phụ thuộc vào nhà cung cấp.</p>
+                </div>
+            </div>
+            <div class="counter-bottom">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><path d="M12 8h.01"></path></svg>
+                <span data-i18n="counterNote">Bộ đếm có thể mất vài giây để tải.</span>
+            </div>
+        </section>
+    </main>
+
+    <!-- OTHER COUNTS -->
+    <section class="other-counts" id="other-counts">
+        <div class="section-heading-row">
+            <div>
+                <div class="section-eyebrow" data-i18n="otherEyebrow">MORE LIVE TRACKERS</div>
+                <h2 data-i18n="otherTitle">Count khác</h2>
+                <p data-i18n="otherDescription">Theo dõi thêm các tài khoản TikTok và game Roblox tại đây.</p>
+            </div>
+            <div class="count-total"><span class="count-total-dot"></span><span><strong id="trackerCountNumber">3</strong> <span data-i18n="trackerCountLabel">BỘ ĐẾM</span></span></div>
+        </div>
+
+        <div class="manager-toolbar">
+            <button class="manager-toggle" id="managerToggle" type="button" aria-expanded="false" aria-controls="embedManagerPanel">
+                <span aria-hidden="true">＋</span><span data-i18n="managerToggle">Thêm embed</span>
+            </button>
+        </div>
+
+        <section class="manager-panel" id="embedManagerPanel" hidden>
+            <h3 class="manager-title" data-i18n="managerTitle">Thêm bộ đếm mới</h3>
+            <p class="manager-description" data-i18n="managerDescription">Dán mã iframe từ LiveCounts.nl và đặt tên cho thẻ hiển thị trên BINAN LIVE COUNT.</p>
+            <div class="manager-note"><span aria-hidden="true">ⓘ</span><span data-i18n="managerNote">Các bộ đếm được lưu trên cơ sở dữ liệu dùng chung và sẽ hiển thị cho mọi khách truy cập. Bạn phải đăng nhập bằng email quản trị; cấu hình Supabase là bắt buộc.</span></div>
+            <form id="adminLoginForm" class="admin-login-form">
+                <div class="manager-field">
+                    <label for="adminEmail" data-i18n="adminEmailLabel">Email quản trị</label>
+                    <input class="manager-input" id="adminEmail" name="adminEmail" type="email" required autocomplete="email" placeholder="email-cua-ban@example.com" data-i18n-placeholder="adminEmailPlaceholder">
+                </div>
+                <div class="manager-actions">
+                    <button class="manager-submit" id="sendLoginLink" type="submit" data-i18n="sendLoginLink">Gửi liên kết đăng nhập</button>
+                    <button class="manager-cancel" id="signOutButton" type="button" hidden data-i18n="signOut">Đăng xuất</button>
+                </div>
+                <p class="manager-status" id="authStatus" role="status" aria-live="polite"></p>
+            </form>
+            <form id="embedManagerForm" hidden>
+                <div class="manager-form-grid">
+                    <div class="manager-field">
+                        <label for="embedName" data-i18n="embedNameLabel">Tên bộ đếm</label>
+                        <input class="manager-input" id="embedName" name="embedName" type="text" maxlength="80" required placeholder="Ví dụ: Tên tài khoản hoặc game" data-i18n-placeholder="embedNamePlaceholder">
+                    </div>
+                    <div class="manager-field">
+                        <label for="embedCode" data-i18n="embedCodeLabel">Mã iframe</label>
+                        <textarea class="manager-textarea" id="embedCode" name="embedCode" required maxlength="3000" spellcheck="false" placeholder="Dán toàn bộ mã &lt;iframe ...&gt; từ LiveCounts.nl vào đây" data-i18n-placeholder="embedCodePlaceholder"></textarea>
+                    </div>
+                </div>
+                <div class="manager-actions">
+                    <button class="manager-submit" type="submit" data-i18n="addEmbedButton">＋ Thêm bộ đếm</button>
+                    <button class="manager-cancel" id="managerCancel" type="button" data-i18n="cancelButton">Hủy</button>
+                </div>
+                <p class="manager-status" id="managerStatus" role="status" aria-live="polite"></p>
+            </form>
+        </section>
+
+        <div class="counts-grid" id="countsGrid">
+            <!-- TikTok: 邵保 -->
+            <article class="count-card tiktok-one">
+                <div class="count-card-head">
+                    <div class="count-avatar" aria-hidden="true">♪</div>
+                    <div>
+                        <h3 class="count-name">邵保</h3>
+                        <p class="count-platform" data-i18n="tiktokFollowerCount">Lượt theo dõi TikTok</p>
+                    </div>
+                </div>
+                <div class="platform-tag">♪ TIKTOK · FOLLOWERS</div>
+                <p class="count-card-description" data-i18n="shaobaoDescription">Bộ đếm lượt theo dõi trực tiếp của tài khoản 邵保.</p>
+                <div class="small-embed-shell">
+                    <iframe src="https://livecounts.nl/tiktok-realtime/embed/?u=ngohaovuluong"
+                            width="300" height="80" title="邵保 live TikTok follower count"
+                            style="border:0;overflow:hidden" loading="lazy"></iframe>
+                </div>
+                <div class="count-card-footer"><span>LIVECOUNTS.NL</span><span class="count-live" data-i18n="liveLabel">Trực tiếp</span></div>
+            </article>
+
+            <!-- Roblox: Sniper Arena -->
+            <article class="count-card roblox-other">
+                <div class="count-card-head">
+                    <div class="count-avatar" aria-hidden="true">⚔</div>
+                    <div>
+                        <h3 class="count-name">Sniper Arena</h3>
+                        <p class="count-platform" data-i18n="robloxPlayerCount">Người chơi Roblox</p>
+                    </div>
+                </div>
+                <div class="platform-tag">◈ ROBLOX · PLAYERS</div>
+                <p class="count-card-description" data-i18n="sniperDescription">Theo dõi số người chơi hiện tại của Sniper Arena.</p>
+                <div class="small-embed-shell roblox-shell">
+                    <iframe class="roblox-iframe" src="https://livecounts.nl/roblox-game-player-count/embed/?id=122446657157717"
+                            width="380" height="120" style="border:0;overflow:hidden"
+                            title="Live Roblox player count: Sniper Arena" loading="lazy"></iframe>
+                </div>
+                <div class="count-card-footer"><span>LIVECOUNTS.NL</span><span class="count-live" data-i18n="liveLabel">Trực tiếp</span></div>
+            </article>
+
+            <!-- TikTok: Thế Anh -->
+            <article class="count-card tiktok-two">
+                <div class="count-card-head">
+                    <div class="count-avatar" aria-hidden="true">♪</div>
+                    <div>
+                        <h3 class="count-name">Thế Anh</h3>
+                        <p class="count-platform" data-i18n="tiktokFollowerCount">Lượt theo dõi TikTok</p>
+                    </div>
+                </div>
+                <div class="platform-tag">♪ TIKTOK · FOLLOWERS</div>
+                <p class="count-card-description" data-i18n="theAnhDescription">Bộ đếm lượt theo dõi trực tiếp của tài khoản Thế Anh.</p>
+                <div class="small-embed-shell">
+                    <iframe src="https://livecounts.nl/tiktok-realtime/embed/?u=theanh26082011"
+                            width="300" height="80" title="Thế Anh live TikTok follower count"
+                            style="border:0;overflow:hidden" loading="lazy"></iframe>
+                </div>
+                <div class="count-card-footer"><span>LIVECOUNTS.NL</span><span class="count-live" data-i18n="liveLabel">Trực tiếp</span></div>
+            </article>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="footer-brand">BINAN LIVE COUNT © 2026</div>
+        <div class="footer-right">
+            <span data-i18n="footerTagline">Được xây dựng cho cộng đồng</span>
+            <span class="footer-separator">·</span>
+            <a class="footer-link" href="https://livecounts.nl/" target="_blank" rel="noopener noreferrer" data-i18n="dataProvider">Nguồn dữ liệu ↗</a>
+        </div>
+    </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    // Public frontend configuration. Fill these in from your Supabase project.
+    // NEVER put a service_role/secret key in this file. Use the publishable (anon) key only.
+    const SUPABASE_URL = "https://gbworjhtkaxtgoaidzwh.supabase.co";
+    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_mco56myHlZwGln1nZaQrKg_1egB-gfq";
+    const ADMIN_EMAIL = "tanhuy115405@example.com";
+
+    const SUPABASE_CONFIGURED =
+        /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(SUPABASE_URL) &&
+        !SUPABASE_URL.includes("YOUR_PROJECT_REF") &&
+        SUPABASE_PUBLISHABLE_KEY.length > 20 &&
+        !SUPABASE_PUBLISHABLE_KEY.includes("YOUR_") &&
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ADMIN_EMAIL) &&
+        !ADMIN_EMAIL.includes("YOUR_ADMIN_EMAIL");
+
+    const supabaseClient = (SUPABASE_CONFIGURED && window.supabase?.createClient)
+        ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
+        : null;
+
+    const translations = {
+        vi: {
+            pageTitle: "BINAN LIVE COUNT — Bảng đếm trực tiếp",
+            brandCaption: "GAMING & CREATOR COUNTS",
+            systemStatus: "HỆ THỐNG TRỰC TUYẾN",
+            eyebrow: "THE LIVE COUNT DASHBOARD",
+            headingFirst: "Theo dõi con số.",
+            headingSecond: "Bắt nhịp cuộc chơi.",
+            introDescription: "Không gian theo dõi số người chơi Roblox và lượt theo dõi TikTok trong một dashboard hiện đại dành cho cộng đồng của bạn.",
+            gameOverview: "GAME NỔI BẬT",
+            featured: "✦ ĐƯỢC CHỌN",
+            gameType: "Roblox · FPS Shooter",
+            gameDescription: "Theo dõi số người chơi RIVALS bằng bộ đếm được nhúng trực tiếp từ LiveCounts.nl.",
+            metaRoblox: "Nền tảng Roblox",
+            metaLive: "Theo dõi trực tiếp",
+            openGame: "Mở trang game",
+            liveAnalytics: "PHÂN TÍCH TRỰC TIẾP",
+            counterTitle: "Người chơi",
+            counterSubtitle: "Số liệu người chơi RIVALS",
+            liveBadge: "LIVE",
+            playerCount: "SỐ NGƯỜI CHƠI",
+            sourceTitle: "Nguồn dữ liệu: LiveCounts.nl",
+            sourceDescription: "Bộ đếm tải dữ liệu từ dịch vụ bên ngoài; số liệu phụ thuộc vào nhà cung cấp.",
+            counterNote: "Bộ đếm có thể mất vài giây để tải.",
+            otherEyebrow: "MORE LIVE TRACKERS",
+            otherTitle: "Count khác",
+            otherDescription: "Theo dõi thêm các tài khoản TikTok và game Roblox tại đây.",
+            trackerCountLabel: "BỘ ĐẾM",
+            managerToggle: "Thêm embed",
+            managerTitle: "Thêm bộ đếm mới",
+            managerDescription: "Dán mã iframe từ LiveCounts.nl và đặt tên cho thẻ hiển thị trên BINAN LIVE COUNT.",
+            managerNote: "Các bộ đếm được lưu trên cơ sở dữ liệu dùng chung và sẽ hiển thị cho mọi khách truy cập. Bạn phải đăng nhập bằng email quản trị; cấu hình Supabase là bắt buộc.",
+            adminEmailLabel: "Email quản trị",
+            adminEmailPlaceholder: "email-cua-ban@example.com",
+            sendLoginLink: "Gửi liên kết đăng nhập",
+            signOut: "Đăng xuất",
+            dbNotConfigured: "Chưa cấu hình Supabase. Hãy điền URL, publishable key và email quản trị trong file HTML, sau đó chạy tệp SQL đi kèm.",
+            loginRequired: "Đăng nhập bằng email quản trị để thêm hoặc xóa bộ đếm công khai.",
+            magicLinkSent: "Đã gửi liên kết đăng nhập nếu email này tồn tại. Mở email và bấm liên kết để đăng nhập.",
+            adminLoggedIn: "Đã đăng nhập với tài khoản quản trị. Bạn có thể thêm hoặc xóa bộ đếm công khai.",
+            wrongAccount: "Tài khoản hiện tại không phải email quản trị được cấu hình. Hãy đăng xuất và dùng đúng email.",
+            onlyAdminEmail: "Chỉ email quản trị đã cấu hình mới được phép đăng nhập vào mục quản trị.",
+            sharedLoadFailed: "Không tải được danh sách công khai. Hãy kiểm tra bảng và chính sách RLS trong Supabase.",
+            loginError: "Không gửi được liên kết đăng nhập. Kiểm tra email và cấu hình Supabase.",
+            embedNameLabel: "Tên bộ đếm",
+            embedNamePlaceholder: "Ví dụ: Tên tài khoản hoặc game",
+            embedCodeLabel: "Mã iframe",
+            embedCodePlaceholder: "Dán toàn bộ mã <iframe ...> từ LiveCounts.nl vào đây",
+            addEmbedButton: "＋ Thêm bộ đếm",
+            cancelButton: "Hủy",
+            countAdded: "Đã thêm bộ đếm công khai cho tất cả khách truy cập.",
+            countRemoved: "Đã xóa bộ đếm khỏi website công khai.",
+            enterName: "Vui lòng nhập tên cho bộ đếm.",
+            pasteIframe: "Hãy dán mã iframe hợp lệ từ LiveCounts.nl.",
+            unsupportedEmbed: "Chỉ hỗ trợ embed TikTok hoặc Roblox từ LiveCounts.nl.",
+            maxCustomCounts: "Đã đạt giới hạn 30 bộ đếm tự thêm.",
+            saveFailed: "Không thể lưu lên máy chủ. Hãy kiểm tra cấu hình, kết nối và chính sách cơ sở dữ liệu.",
+            confirmRemove: "Xóa bộ đếm này khỏi website công khai?",
+            customDescription: "Bộ đếm được nhúng từ LiveCounts.nl.",
+            removeLabel: "Xóa",
+            tiktokFollowerCount: "Lượt theo dõi TikTok",
+            robloxPlayerCount: "Người chơi Roblox",
+            shaobaoDescription: "Bộ đếm lượt theo dõi trực tiếp của tài khoản 邵保.",
+            sniperDescription: "Theo dõi số người chơi hiện tại của Sniper Arena.",
+            theAnhDescription: "Bộ đếm lượt theo dõi trực tiếp của tài khoản Thế Anh.",
+            liveLabel: "Trực tiếp",
+            footerTagline: "Được xây dựng cho cộng đồng",
+            dataProvider: "Nguồn dữ liệu ↗",
+            languageLabel: "Chọn ngôn ngữ"
+        },
+        en: {
+            pageTitle: "BINAN LIVE COUNT — Live Dashboard",
+            brandCaption: "GAMING & CREATOR COUNTS",
+            systemStatus: "SYSTEM ONLINE",
+            eyebrow: "THE LIVE COUNT DASHBOARD",
+            headingFirst: "Track the numbers.",
+            headingSecond: "Stay in the game.",
+            introDescription: "Track Roblox player counts and TikTok followers in one modern dashboard built for your community.",
+            gameOverview: "FEATURED GAME",
+            featured: "✦ FEATURED",
+            gameType: "Roblox · FPS Shooter",
+            gameDescription: "Track RIVALS players with the counter embedded directly from LiveCounts.nl.",
+            metaRoblox: "Roblox Platform",
+            metaLive: "Live Tracking",
+            openGame: "Open Game Page",
+            liveAnalytics: "LIVE ANALYTICS",
+            counterTitle: "Players",
+            counterSubtitle: "RIVALS player statistics",
+            liveBadge: "LIVE",
+            playerCount: "PLAYER COUNT",
+            sourceTitle: "Data source: LiveCounts.nl",
+            sourceDescription: "The counter loads data from an external service; statistics depend on the provider.",
+            counterNote: "The counter may take a few seconds to load.",
+            otherEyebrow: "MORE LIVE TRACKERS",
+            otherTitle: "More Counts",
+            otherDescription: "Follow additional TikTok accounts and Roblox games here.",
+            trackerCountLabel: "TRACKERS",
+            managerToggle: "Add embed",
+            managerTitle: "Add a new counter",
+            managerDescription: "Paste an iframe snippet from LiveCounts.nl and choose a display name for BINAN LIVE COUNT.",
+            managerNote: "Counters are saved to a shared database and become visible to all visitors. You must sign in with the administrator email; Supabase setup is required.",
+            adminEmailLabel: "Administrator email",
+            adminEmailPlaceholder: "your-email@example.com",
+            sendLoginLink: "Send sign-in link",
+            signOut: "Sign out",
+            dbNotConfigured: "Supabase is not configured. Fill in the URL, publishable key, and admin email in this HTML file, then run the included SQL setup.",
+            loginRequired: "Sign in with the administrator email to add or remove public counters.",
+            magicLinkSent: "A sign-in link was sent if the email exists. Open your email and click the link to sign in.",
+            adminLoggedIn: "Signed in as the administrator. You can add or remove public counters.",
+            wrongAccount: "The current account is not the configured administrator email. Sign out and use the correct email.",
+            onlyAdminEmail: "Only the configured administrator email can access management actions.",
+            sharedLoadFailed: "Could not load public counters. Check the table and RLS policies in Supabase.",
+            loginError: "Could not send a sign-in link. Check the email and Supabase configuration.",
+            embedNameLabel: "Counter name",
+            embedNamePlaceholder: "For example: account or game name",
+            embedCodeLabel: "Iframe code",
+            embedCodePlaceholder: "Paste the full <iframe ...> snippet from LiveCounts.nl here",
+            addEmbedButton: "＋ Add counter",
+            cancelButton: "Cancel",
+            countAdded: "Counter published for all visitors.",
+            countRemoved: "Counter removed from the public website.",
+            enterName: "Please enter a name for the counter.",
+            pasteIframe: "Please paste a valid iframe snippet from LiveCounts.nl.",
+            unsupportedEmbed: "Only TikTok or Roblox embeds from LiveCounts.nl are supported.",
+            maxCustomCounts: "The limit of 30 custom counters has been reached.",
+            saveFailed: "Could not save to the server. Check the configuration, connection, and database policies.",
+            confirmRemove: "Remove this counter from the public website?",
+            customDescription: "Embedded counter from LiveCounts.nl.",
+            removeLabel: "Remove",
+            tiktokFollowerCount: "TikTok followers",
+            robloxPlayerCount: "Roblox players",
+            shaobaoDescription: "Live follower count for the 邵保 TikTok account.",
+            sniperDescription: "Track the current player count for Sniper Arena.",
+            theAnhDescription: "Live follower count for the Thế Anh TikTok account.",
+            liveLabel: "Live",
+            footerTagline: "Built for the community",
+            dataProvider: "Data source ↗",
+            languageLabel: "Select language"
+        }
+    };
+
+    const languageButton = document.getElementById("languageButton");
+    const languageMenu = document.getElementById("languageMenu");
+    const currentFlag = document.getElementById("currentFlag");
+    const currentLanguage = document.getElementById("currentLanguage");
+    const languageOptions = document.querySelectorAll(".language-option");
+    let currentLang = "vi";
+
+    function closeLanguageMenu() {
+        languageMenu.classList.remove("open");
+        languageButton.setAttribute("aria-expanded", "false");
+    }
+
+    function setLanguage(lang) {
+        const dictionary = translations[lang];
+        if (!dictionary) return;
+        currentLang = lang;
+        document.documentElement.lang = lang;
+        document.title = dictionary.pageTitle;
+
+        document.querySelectorAll("[data-i18n]").forEach(element => {
+            const key = element.dataset.i18n;
+            if (Object.prototype.hasOwnProperty.call(dictionary, key)) {
+                element.textContent = dictionary[key];
+            }
+        });
+        document.querySelectorAll("[data-i18n-placeholder]").forEach(element => {
+            const key = element.dataset.i18nPlaceholder;
+            if (Object.prototype.hasOwnProperty.call(dictionary, key)) {
+                element.placeholder = dictionary[key];
+            }
+        });
+
+        currentFlag.textContent = lang === "vi" ? "🇻🇳" : "🇺🇸";
+        currentLanguage.textContent = lang === "vi" ? "Tiếng Việt" : "English";
+        languageButton.setAttribute("aria-label", dictionary.languageLabel);
+        languageOptions.forEach(option => {
+            const selected = option.dataset.lang === lang;
+            option.classList.toggle("active", selected);
+            option.setAttribute("aria-pressed", String(selected));
+            option.querySelector(".option-check").textContent = selected ? "✓" : "";
+        });
+        closeLanguageMenu();
+        updateAdminUi();
+    }
+
+    languageButton.addEventListener("click", () => {
+        const isOpen = languageMenu.classList.toggle("open");
+        languageButton.setAttribute("aria-expanded", String(isOpen));
+    });
+    languageOptions.forEach(option => {
+        option.addEventListener("click", () => setLanguage(option.dataset.lang));
+    });
+    document.addEventListener("click", event => {
+        if (!event.target.closest(".language")) closeLanguageMenu();
+    });
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape") {
+            closeLanguageMenu();
+            languageButton.focus();
+        }
+    });
+
+    // Shared counter manager elements.
+    const managerToggle = document.getElementById("managerToggle");
+    const managerPanel = document.getElementById("embedManagerPanel");
+    const managerForm = document.getElementById("embedManagerForm");
+    const managerCancel = document.getElementById("managerCancel");
+    const managerStatus = document.getElementById("managerStatus");
+    const embedNameInput = document.getElementById("embedName");
+    const embedCodeInput = document.getElementById("embedCode");
+    const countsGrid = document.getElementById("countsGrid");
+    const baseCounterCount = 3;
+
+    let customCountsMemory = [];
+    let currentSession = null;
+    let isAdmin = false;
+    let backendLoadHadError = false;
+
+    function dictionaryNow() {
+        return translations[currentLang] || translations.vi;
+    }
+
+    function showManagerStatus(message, isError = false) {
+        const status = document.getElementById("managerStatus");
+        status.textContent = message;
+        status.classList.toggle("error", isError);
+    }
+
+    function showAuthStatus(message, isError = false) {
+        const status = document.getElementById("authStatus");
+        status.textContent = message;
+        status.classList.toggle("error", isError);
+    }
+
+    function authMessage(key) {
+        return dictionaryNow()[key] || key;
+    }
+
+    function openOrCloseManager(forceOpen) {
+        const opening = typeof forceOpen === "boolean" ? forceOpen : managerPanel.hidden;
+        managerPanel.hidden = !opening;
+        managerToggle.setAttribute("aria-expanded", String(opening));
+        if (opening) document.getElementById("adminEmail").focus();
+    }
+
+    function readCustomCounts() {
+        return customCountsMemory;
+    }
+
+    function validateCounterUrl(rawUrl) {
+        try {
+            const url = new URL(rawUrl);
+            if (url.protocol !== "https:" || url.hostname !== "livecounts.nl") return false;
+            if (url.pathname === "/tiktok-realtime/embed/") {
+                const account = url.searchParams.get("u");
+                return !!account && /^[a-zA-Z0-9._-]{1,100}$/.test(account);
+            }
+            if (url.pathname === "/roblox-game-player-count/embed/") {
+                const gameId = url.searchParams.get("id");
+                return !!gameId && /^\d{1,30}$/.test(gameId);
+            }
+            return false;
+        } catch (_) {
+            return false;
+        }
+    }
+
+    function parseEmbedSnippet(snippet) {
+        const parsed = new DOMParser().parseFromString(snippet, "text/html");
+        const iframe = parsed.querySelector("iframe");
+        if (!iframe) return null;
+
+        const src = iframe.getAttribute("src") || "";
+        if (!validateCounterUrl(src)) return null;
+
+        const url = new URL(src);
+        const isTiktok = url.pathname === "/tiktok-realtime/embed/";
+        return {
+            src: url.href,
+            type: isTiktok ? "tiktok" : "roblox",
+            width: isTiktok ? 300 : 380,
+            height: isTiktok ? 80 : 120
+        };
+    }
+
+    function makeElement(tag, className, text) {
+        const element = document.createElement(tag);
+        if (className) element.className = className;
+        if (text !== undefined) element.textContent = text;
+        return element;
+    }
+
+    function renderCustomCounts() {
+        countsGrid.querySelectorAll(".custom-count-card").forEach(card => card.remove());
+        const counters = readCustomCounts();
+        const dictionary = dictionaryNow();
+
+        counters.forEach(counter => {
+            const card = makeElement("article", "count-card custom-count-card");
+            card.dataset.customId = counter.id;
+            card.style.setProperty("--accent", counter.type === "tiktok" ? "#ff719c" : "#9c93ff");
+
+            const head = makeElement("div", "count-card-head");
+            const avatar = makeElement("div", "count-avatar", counter.type === "tiktok" ? "♪" : "⚔");
+            avatar.setAttribute("aria-hidden", "true");
+            const titleWrap = document.createElement("div");
+            titleWrap.appendChild(makeElement("h3", "count-name", counter.name));
+            titleWrap.appendChild(makeElement("p", "count-platform",
+                counter.type === "tiktok" ? dictionary.tiktokFollowerCount : dictionary.robloxPlayerCount));
+            head.append(avatar, titleWrap);
+
+            const tag = makeElement("div", "platform-tag",
+                counter.type === "tiktok" ? "♪ TIKTOK · FOLLOWERS" : "◈ ROBLOX · PLAYERS");
+            const description = makeElement("p", "count-card-description", dictionary.customDescription);
+            const embedShell = makeElement("div", "small-embed-shell" + (counter.type === "roblox" ? " roblox-shell" : ""));
+            const iframe = document.createElement("iframe");
+            iframe.src = counter.src;
+            iframe.width = String(counter.width);
+            iframe.height = String(counter.height);
+            iframe.title = counter.name + " live count";
+            iframe.loading = "lazy";
+            iframe.referrerPolicy = "strict-origin-when-cross-origin";
+            iframe.style.border = "0";
+            iframe.style.overflow = "hidden";
+            if (counter.type === "roblox") iframe.className = "roblox-iframe";
+            embedShell.appendChild(iframe);
+
+            const footer = makeElement("div", "count-card-footer");
+            footer.appendChild(makeElement("span", "", "LIVECOUNTS.NL"));
+            const rightFooter = makeElement("span", "");
+            rightFooter.style.display = "inline-flex";
+            rightFooter.style.alignItems = "center";
+            rightFooter.style.gap = "9px";
+            rightFooter.appendChild(makeElement("span", "count-live", dictionary.liveLabel));
+
+            // Removal controls are only rendered after admin authentication.
+            if (isAdmin) {
+                const removeButton = makeElement("button", "remove-count-button", dictionary.removeLabel);
+                removeButton.type = "button";
+                removeButton.setAttribute("aria-label", dictionary.removeLabel + " " + counter.name);
+                removeButton.addEventListener("click", () => removeCustomCount(counter.id));
+                rightFooter.appendChild(removeButton);
+            }
+            footer.appendChild(rightFooter);
+            card.append(head, tag, description, embedShell, footer);
+            countsGrid.appendChild(card);
+        });
+    }
+
+    function updateTrackerCount() {
+        const customCount = readCustomCounts().length;
+        document.getElementById("trackerCountNumber").textContent = String(baseCounterCount + customCount);
+    }
+
+    function updateAdminUi() {
+        const loginForm = document.getElementById("adminLoginForm");
+        const loginEmail = document.getElementById("adminEmail");
+        const loginButton = document.getElementById("sendLoginLink");
+        const signOutButton = document.getElementById("signOutButton");
+        const adminEmail = ADMIN_EMAIL.toLowerCase();
+        const sessionEmail = currentSession?.user?.email?.toLowerCase() || "";
+
+        isAdmin = !!(supabaseClient && SUPABASE_CONFIGURED && currentSession &&
+            adminEmail && sessionEmail === adminEmail);
+
+        if (!SUPABASE_CONFIGURED || !supabaseClient) {
+            loginEmail.disabled = true;
+            loginButton.disabled = true;
+            signOutButton.hidden = true;
+            loginForm.hidden = false;
+            managerForm.hidden = true;
+            showAuthStatus(authMessage("dbNotConfigured"), true);
+        } else if (isAdmin) {
+            loginEmail.value = ADMIN_EMAIL;
+            loginEmail.disabled = true;
+            loginButton.disabled = true;
+            signOutButton.hidden = false;
+            loginForm.hidden = false;
+            managerForm.hidden = false;
+            showAuthStatus(authMessage("adminLoggedIn"), false);
+        } else if (currentSession) {
+            loginEmail.disabled = false;
+            loginButton.disabled = false;
+            signOutButton.hidden = false;
+            loginForm.hidden = false;
+            managerForm.hidden = true;
+            showAuthStatus(authMessage("wrongAccount"), true);
+        } else {
+            loginEmail.disabled = false;
+            loginButton.disabled = false;
+            signOutButton.hidden = true;
+            loginForm.hidden = false;
+            managerForm.hidden = true;
+            showAuthStatus(authMessage("loginRequired"), false);
+        }
+
+        renderCustomCounts();
+        updateTrackerCount();
+    }
+
+    async function loadSharedCounts() {
+        if (!supabaseClient || !SUPABASE_CONFIGURED) {
+            customCountsMemory = [];
+            renderCustomCounts();
+            updateTrackerCount();
+            return;
+        }
+
+        const { data, error } = await supabaseClient
+            .from("binan_live_counts")
+            .select("id,name,src,type,width,height,created_at")
+            .order("created_at", { ascending: true });
+
+        if (error) {
+            backendLoadHadError = true;
+            console.error("Could not load BINAN shared counts:", error.message);
+            customCountsMemory = [];
+            renderCustomCounts();
+            updateTrackerCount();
+            if (managerPanel && !managerPanel.hidden) {
+                showManagerStatus(authMessage("sharedLoadFailed"), true);
+            }
+            return;
+        }
+
+        backendLoadHadError = false;
+        customCountsMemory = (Array.isArray(data) ? data : []).filter(item =>
+            item && typeof item.name === "string" &&
+            typeof item.src === "string" && validateCounterUrl(item.src) &&
+            ["tiktok", "roblox"].includes(item.type) && typeof item.id === "string"
+        );
+        renderCustomCounts();
+        updateTrackerCount();
+    }
+
+    async function removeCustomCount(id) {
+        if (!isAdmin || !supabaseClient) {
+            showManagerStatus(authMessage("loginRequired"), true);
+            return;
+        }
+        const dictionary = dictionaryNow();
+        if (!window.confirm(dictionary.confirmRemove)) return;
+
+        const { error } = await supabaseClient
+            .from("binan_live_counts")
+            .delete()
+            .eq("id", id);
+
+        if (error) {
+            console.error("Could not delete shared count:", error.message);
+            showManagerStatus(dictionary.saveFailed, true);
+            return;
+        }
+        await loadSharedCounts();
+        showManagerStatus(dictionary.countRemoved);
+    }
+
+    managerToggle.addEventListener("click", () => openOrCloseManager());
+    managerCancel.addEventListener("click", () => openOrCloseManager(false));
+
+    document.getElementById("adminLoginForm").addEventListener("submit", async event => {
+        event.preventDefault();
+        if (!SUPABASE_CONFIGURED || !supabaseClient) {
+            showAuthStatus(authMessage("dbNotConfigured"), true);
+            return;
+        }
+
+        const email = document.getElementById("adminEmail").value.trim().toLowerCase();
+        if (!email || email !== ADMIN_EMAIL.toLowerCase()) {
+            showAuthStatus(authMessage("onlyAdminEmail"), true);
+            return;
+        }
+
+        const sendButton = document.getElementById("sendLoginLink");
+        sendButton.disabled = true;
+        try {
+            const { error } = await supabaseClient.auth.signInWithOtp({
+                email,
+                options: {
+                    shouldCreateUser: false,
+                    emailRedirectTo: window.location.href.split("#")[0]
+                }
+            });
+            if (error) {
+                console.error("Supabase sign-in link error:", error.message);
+                showAuthStatus(authMessage("loginError"), true);
+            } else {
+                showAuthStatus(authMessage("magicLinkSent"), false);
+            }
+        } catch (error) {
+            console.error("Supabase sign-in exception:", error);
+            showAuthStatus(authMessage("loginError"), true);
+        } finally {
+            sendButton.disabled = false;
+        }
+    });
+
+    document.getElementById("signOutButton").addEventListener("click", async () => {
+        if (supabaseClient) {
+            const { error } = await supabaseClient.auth.signOut();
+            if (error) console.error("Supabase sign-out error:", error.message);
+            currentSession = null;
+            updateAdminUi();
+        }
+    });
+
+    managerForm.addEventListener("submit", async event => {
+        event.preventDefault();
+        const dictionary = dictionaryNow();
+        if (!isAdmin || !supabaseClient) {
+            showManagerStatus(authMessage("loginRequired"), true);
+            return;
+        }
+
+        const name = embedNameInput.value.trim();
+        const snippet = embedCodeInput.value.trim();
+        if (!name) {
+            showManagerStatus(dictionary.enterName, true);
+            embedNameInput.focus();
+            return;
+        }
+        if (!snippet || !/<iframe\b/i.test(snippet)) {
+            showManagerStatus(dictionary.pasteIframe, true);
+            embedCodeInput.focus();
+            return;
+        }
+        const parsed = parseEmbedSnippet(snippet);
+        if (!parsed) {
+            showManagerStatus(dictionary.unsupportedEmbed, true);
+            embedCodeInput.focus();
+            return;
+        }
+
+        if (readCustomCounts().length >= 30) {
+            showManagerStatus(dictionary.maxCustomCounts, true);
+            return;
+        }
+
+        const submitButton = managerForm.querySelector('[type="submit"]');
+        submitButton.disabled = true;
+        try {
+            const { error } = await supabaseClient
+                .from("binan_live_counts")
+                .insert({
+                    name: name.slice(0, 80),
+                    src: parsed.src,
+                    type: parsed.type,
+                    width: parsed.width,
+                    height: parsed.height
+                });
+
+            if (error) {
+                console.error("Could not add shared count:", error.message);
+                showManagerStatus(dictionary.saveFailed, true);
+                return;
+            }
+
+            await loadSharedCounts();
+            managerForm.reset();
+            showManagerStatus(dictionary.countAdded);
+        } catch (error) {
+            console.error("Supabase insert exception:", error);
+            showManagerStatus(dictionary.saveFailed, true);
+        } finally {
+            submitButton.disabled = false;
+        }
+    });
+
+    async function initializeSharedCounts() {
+        updateAdminUi();
+        if (!supabaseClient || !SUPABASE_CONFIGURED) {
+            customCountsMemory = [];
+            renderCustomCounts();
+            updateTrackerCount();
+            return;
+        }
+
+        // Detect magic-link callback/session changes without exposing any admin secret.
+        supabaseClient.auth.onAuthStateChange((_event, session) => {
+            currentSession = session;
+            // Avoid making additional Supabase requests inside the auth callback itself.
+            window.setTimeout(async () => {
+                updateAdminUi();
+                await loadSharedCounts();
+            }, 0);
+        });
+
+        const { data, error } = await supabaseClient.auth.getSession();
+        if (error) console.error("Could not read Supabase session:", error.message);
+        currentSession = data?.session || null;
+        updateAdminUi();
+        await loadSharedCounts();
+    }
+
+    // The site starts in Vietnamese each time the page is opened.
+    setLanguage("vi");
+    renderCustomCounts();
+    updateTrackerCount();
+    initializeSharedCounts();
+</script>
+</body>
+</html>
